@@ -41,3 +41,51 @@ mvn spring-boot:run
 ## Ghi chu
 
 - Database H2 dang chay in-memory, du lieu se mat sau khi tat app.
+
+---
+
+## Bai tap: CI/CD voi GitHub Actions + Docker Hub
+
+### 1. Repository GitHub cua ban
+
+Repo: **https://github.com/brai2/demo**
+
+Trong thu muc project (`e:/java` hoac noi ban luu code), chay:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit: Spring Boot + Docker + workflow"
+git branch -M main
+git remote add origin https://github.com/brai2/demo.git
+git push -u origin main
+```
+
+Neu may da co `git init` / `remote` roi: chi can `git remote set-url origin https://github.com/brai2/demo.git` roi `git push -u origin main`.
+
+### 2. Tao Secrets tren GitHub (Docker Hub)
+
+1. Tren GitHub: repo cua ban -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**.
+2. Them 2 secret (dung dung ten de workflow nhan dien):
+
+| Ten secret        | Gia tri |
+|-------------------|---------|
+| `DOCKER_USERNAME` | Ten dang nhap Docker Hub |
+| `DOCKER_PASSWORD` | **Access Token** Docker Hub (khuyen nghi) hoac mat khau |
+
+**Tao Access Token Docker Hub:** docker.com -> **Account Settings** -> **Security** -> **New Access Token**.
+
+### 3. Workflow tu dong build & push image
+
+- File: `.github/workflows/deploy.yml`
+- Khi **push len nhanh `main`**: login Docker Hub -> `docker build` -> `docker push`
+- Image tren Docker Hub: `<DOCKER_USERNAME>/event-manager:latest` va `<DOCKER_USERNAME>/event-manager:<7-ky-tu-commit>`
+
+### 4. Chay image sau khi push
+
+```bash
+docker pull <dockerhub-username>/event-manager:latest
+docker run -p 8080:8080 <dockerhub-username>/event-manager:latest
+```
+
+Mo `http://localhost:8080/events`.
