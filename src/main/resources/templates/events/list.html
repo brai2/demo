@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quan ly su kien</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <h1>Quan ly su kien</h1>
+
+    <p class="success-message" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p class="error-message" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+    <a class="btn primary" th:href="@{/events/new}">+ Tao su kien</a>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ten su kien</th>
+            <th>Dia diem</th>
+            <th>Bat dau</th>
+            <th>Ket thuc</th>
+            <th>So luong toi da</th>
+            <th>Hanh dong</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(events)}">
+            <td colspan="7" class="empty">Chua co su kien nao.</td>
+        </tr>
+        <tr th:each="event : ${events}">
+            <td th:text="${event.id}"></td>
+            <td th:text="${event.name}"></td>
+            <td th:text="${event.location}"></td>
+            <td th:text="${#temporals.format(event.startTime, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(event.endTime, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${event.maxAttendees}"></td>
+            <td>
+                <a class="btn" th:href="@{|/events/${event.id}/edit|}">Sua</a>
+                <form th:action="@{|/events/${event.id}/delete|}" method="post" style="display:inline;">
+                    <button class="btn danger" type="submit">Xoa</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${event.id == null} ? 'Tao su kien' : 'Cap nhat su kien'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${event.id == null} ? 'Tao su kien moi' : 'Cap nhat su kien'"></h1>
+
+    <p class="error-message" th:if="${timeError}" th:text="${timeError}"></p>
+
+    <form th:object="${event}"
+          th:action="${event.id == null} ? @{/events} : @{'/events/' + ${event.id}}"
+          method="post">
+        <label for="name">Ten su kien</label>
+        <input id="name" type="text" th:field="*{name}">
+        <span class="field-error" th:errors="*{name}"></span>
+
+        <label for="description">Mo ta</label>
+        <textarea id="description" rows="4" th:field="*{description}"></textarea>
+        <span class="field-error" th:errors="*{description}"></span>
+
+        <label for="location">Dia diem</label>
+        <input id="location" type="text" th:field="*{location}">
+        <span class="field-error" th:errors="*{location}"></span>
+
+        <label for="startTime">Bat dau</label>
+        <input id="startTime" type="datetime-local" th:field="*{startTime}">
+        <span class="field-error" th:errors="*{startTime}"></span>
+
+        <label for="endTime">Ket thuc</label>
+        <input id="endTime" type="datetime-local" th:field="*{endTime}">
+        <span class="field-error" th:errors="*{endTime}"></span>
+
+        <label for="maxAttendees">So luong toi da</label>
+        <input id="maxAttendees" type="number" min="1" th:field="*{maxAttendees}">
+        <span class="field-error" th:errors="*{maxAttendees}"></span>
+
+        <div class="actions">
+            <button class="btn primary" type="submit">Luu</button>
+            <a class="btn" th:href="@{/events}">Quay lai</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

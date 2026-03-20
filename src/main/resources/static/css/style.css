@@ -1,0 +1,94 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    color: #222;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+th, td {
+    border: 1px solid #e1e3e8;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background: #fafbfc;
+}
+
+.btn {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    background: #f6f8fa;
+    color: #24292f;
+    padding: 7px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-right: 6px;
+}
+
+.btn.primary {
+    background: #2f81f7;
+    color: #fff;
+    border-color: #2f81f7;
+}
+
+.btn.danger {
+    background: #cf222e;
+    color: #fff;
+    border-color: #cf222e;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 5px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.actions {
+    margin-top: 18px;
+}
+
+.field-error, .error-message {
+    color: #cf222e;
+    font-size: 14px;
+}
+
+.success-message {
+    color: #1a7f37;
+    font-size: 14px;
+}
+
+.empty {
+    text-align: center;
+    color: #57606a;
+}
