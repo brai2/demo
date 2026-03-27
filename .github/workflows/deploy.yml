@@ -40,8 +40,15 @@ jobs:
             ${{ steps.vars.outputs.IMAGE }}:${{ steps.vars.outputs.TAG_SHA }}
 
       - name: Triển khai lên DevOps Classroom
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
         run: |
           set -euo pipefail
+          if [ -z "${DEPLOY_URL:-}" ]; then
+            echo "Thiếu GitHub Secret DEPLOY_URL (Settings → Secrets → Actions)."
+            exit 1
+          fi
+
           REPO="brai27/event-manager"
           TAG="latest"
           SLOT="8"
@@ -50,6 +57,10 @@ jobs:
           SLEEP_SEC=25
           LAST_BODY=""
           LAST_CODE=""
+
+          # Giống hướng dẫn lớp: POST + query trên URL (không dùng -G vì -G sẽ biến thành GET).
+          BASE_URL="${DEPLOY_URL%/}"
+          WEBHOOK_URL="${BASE_URL}?repo=${REPO}&tag=${TAG}&slot=${SLOT}&container_port=${CONTAINER_PORT}&strict_container_port=0"
 
           should_retry() {
             code="$1"
@@ -62,12 +73,7 @@ jobs:
           for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
             echo "Deploy webhook: lần $attempt/$MAX_ATTEMPTS"
             set +e
-            RESPONSE=$(curl -sS --max-time 180 -w "\n%{http_code}" -G -X POST "${{ secrets.DEPLOY_URL }}" \
-              --data-urlencode "repo=$REPO" \
-              --data-urlencode "tag=$TAG" \
-              --data-urlencode "slot=$SLOT" \
-              --data-urlencode "container_port=$CONTAINER_PORT" \
-              --data-urlencode "strict_container_port=0")
+            RESPONSE=$(curl -sS --max-time 240 -w "\n%{http_code}" -X POST "$WEBHOOK_URL")
             CURL_EXIT=$?
             set -e
 
