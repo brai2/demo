@@ -41,27 +41,76 @@ jobs:
 
       - name: Triển khai lên DevOps Classroom
         run: |
+          set -euo pipefail
           REPO="brai27/event-manager"
           TAG="latest"
           SLOT="8"
           CONTAINER_PORT="80"
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -G -X POST "${{ secrets.DEPLOY_URL }}" \
-            --data-urlencode "repo=$REPO" \
-            --data-urlencode "tag=$TAG" \
-            --data-urlencode "slot=$SLOT" \
-            --data-urlencode "container_port=$CONTAINER_PORT" \
-            --data-urlencode "strict_container_port=0")
-          BODY=$(echo "$RESPONSE" | sed '$d')
-          CODE=$(echo "$RESPONSE" | tail -n1)
-          echo "Webhook HTTP: $CODE"
-          if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
-            echo "Deploy thất bại. Xem chi tiết trong nhóm log bên dưới."
-            echo "::group::Chi tiết webhook JSON"
-            echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
-            echo "::endgroup::"
-            exit 1
-          fi
-          echo "Deploy thành công."
+          MAX_ATTEMPTS=5
+          SLEEP_SEC=25
+          LAST_BODY=""
+          LAST_CODE=""
+
+          should_retry() {
+            code="$1"
+            case "$code" in
+              502|503|504|524|429) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Deploy webhook: lần $attempt/$MAX_ATTEMPTS"
+            set +e
+            RESPONSE=$(curl -sS --max-time 180 -w "\n%{http_code}" -G -X POST "${{ secrets.DEPLOY_URL }}" \
+              --data-urlencode "repo=$REPO" \
+              --data-urlencode "tag=$TAG" \
+              --data-urlencode "slot=$SLOT" \
+              --data-urlencode "container_port=$CONTAINER_PORT" \
+              --data-urlencode "strict_container_port=0")
+            CURL_EXIT=$?
+            set -e
+
+            if [ "$CURL_EXIT" -ne 0 ]; then
+              echo "curl lỗi (exit $CURL_EXIT). Thường do mạng/timeout phía server."
+              if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+                echo "Chờ ${SLEEP_SEC}s rồi thử lại..."
+                sleep "$SLEEP_SEC"
+              fi
+              continue
+            fi
+
+            LAST_BODY=$(echo "$RESPONSE" | sed '$d')
+            LAST_CODE=$(echo "$RESPONSE" | tail -n1)
+            echo "Webhook HTTP: $LAST_CODE"
+
+            if [ "$LAST_CODE" -ge 200 ] && [ "$LAST_CODE" -lt 300 ]; then
+              echo "Deploy thành công."
+              echo "::group::Chi tiết webhook JSON"
+              echo "$LAST_BODY" | python3 -m json.tool 2>/dev/null || echo "$LAST_BODY"
+              echo "::endgroup::"
+              exit 0
+            fi
+
+            if [ "$LAST_CODE" -ge 400 ] && [ "$LAST_CODE" -lt 500 ]; then
+              echo "Lỗi phía client (HTTP $LAST_CODE). Không retry."
+              break
+            fi
+
+            if should_retry "$LAST_CODE" && [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "Lỗi tạm (HTTP $LAST_CODE). Chờ ${SLEEP_SEC}s rồi thử lại..."
+              sleep "$SLEEP_SEC"
+              continue
+            fi
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              echo "HTTP $LAST_CODE. Chờ ${SLEEP_SEC}s rồi thử lại..."
+              sleep "$SLEEP_SEC"
+            fi
+          done
+
+          echo "Deploy thất bại sau $MAX_ATTEMPTS lần. Xem chi tiết trong nhóm log bên dưới."
           echo "::group::Chi tiết webhook JSON"
-          echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+          echo "${LAST_BODY:-}" | python3 -m json.tool 2>/dev/null || echo "${LAST_BODY:-}"
           echo "::endgroup::"
+          exit 1
